@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#6d5efc">
+<title>Thời gian biểu của tôi</title>
+<style>
+  :root {
+    --bg: #f4f5fb; --card: #ffffff; --text: #1d1f2b; --muted: #6f7487; --border: #e6e8f2;
+    --acc: #6d5efc; --track: #e9e9f5; --good: #17a673; --warn: #e0892b; --bad: #d64545;
+    --math: #4f7cff; --phys: #7b61ff; --chem: #2aa5b8; --eng: #3a8ee6; --vn: #d9578b;
+    --gym: #22a06b; --walk: #6cbf4a; --rest: #9a9aa8; --other: #e8a33d; --ai: #ff7a45; --free: #eeeef5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12131b; --card: #1c1e2a; --text: #ecedf5; --muted: #9aa0b5; --border: #2a2d3c;
+      --acc: #8b7fff; --track: #2a2d3c; --good: #3cc287; --warn: #f0b658; --bad: #ff6b6b;
+      --math: #6d93ff; --phys: #9a86ff; --chem: #50c3d4; --eng: #62a9f0; --vn: #ec7aa6;
+      --gym: #3cc287; --walk: #8ad16a; --rest: #6b6e80; --other: #f0b658; --ai: #ff9a6b; --free: #242736;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+  header { background: linear-gradient(135deg, #6d5efc, #3aa8e6); color: #fff; padding: 22px 20px 56px; }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 4px 0 0; opacity: .9; }
+  main { max-width: 1040px; margin: -40px auto 40px; padding: 0 16px; }
+  nav { display: flex; gap: 6px; background: var(--card); border-radius: 14px; padding: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.08); margin-bottom: 16px; }
+  nav button { flex: 1; border: none; background: transparent; color: var(--muted); padding: 9px; border-radius: 10px; font: inherit; cursor: pointer; }
+  nav button.on { background: var(--acc); color: #fff; font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
+  .card h2 { font-size: 15px; margin: 0 0 12px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .grow { flex: 1; }
+  .btn { border: 1px solid var(--border); background: var(--card); color: var(--text); padding: 7px 12px; border-radius: 10px; font: inherit; cursor: pointer; }
+  .btn:hover { border-color: var(--muted); }
+  .btn.acc { background: var(--acc); color: #fff; border-color: transparent; }
+  .btn.run { background: var(--good); color: #fff; border-color: transparent; }
+  .btn.stop { background: var(--bad); color: #fff; border-color: transparent; }
+  .btn.sm { padding: 4px 9px; font-size: 12px; }
+  .date { font-size: 18px; font-weight: 700; }
+  .hero { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+  .ring { width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; position: relative; flex-shrink: 0; }
+  .ring::after { content: ""; position: absolute; inset: 11px; background: var(--card); border-radius: 50%; }
+  .ring span { position: relative; z-index: 1; font-size: 22px; font-weight: 800; }
+  .msg { font-size: 15px; font-weight: 500; margin: 0 0 6px; }
+  .tips { color: var(--muted); font-size: 13px; margin: 2px 0; }
+  .alert { border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 13px; }
+  .alert.warn { background: rgba(224,137,43,.12); color: var(--warn); }
+  .alert.good { background: rgba(23,166,115,.12); color: var(--good); }
+  .streak { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg,#ff9a3c,#ff5e62); color: #fff; padding: 6px 14px; border-radius: 999px; font-weight: 700; }
+  .pill { font-size: 12px; background: var(--track); padding: 2px 8px; border-radius: 999px; color: var(--muted); }
+  .task { display: grid; grid-template-columns: 26px 110px 1fr auto; gap: 10px; align-items: start; border: 1px solid var(--border); border-left: 5px solid var(--c); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .task.done { opacity: .72; }
+  .task.done .tt { text-decoration: line-through; }
+  .task input[type=checkbox] { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--c); cursor: pointer; }
+  .tm { color: var(--muted); font-size: 12px; }
+  .tt { font-weight: 600; }
+  .sub { color: var(--muted); font-size: 12px; }
+  .timer { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 15px; color: var(--c); }
+  .timer.live { color: var(--good); }
+  .actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .fields { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+  .fields label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  input[type=number], input[type=time], select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; }
+  input[type=number] { width: 72px; }
+  textarea, input.note { width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 10px; padding: 8px; font: inherit; }
+  textarea { min-height: 110px; resize: vertical; }
+  .task input.note { margin-top: 8px; font-size: 13px; padding: 6px 8px; }
+  .addform { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+  .bars { display: grid; gap: 10px; }
+  .bar-row { display: grid; grid-template-columns: 130px 1fr 150px; gap: 10px; align-items: center; font-size: 13px; }
+  .track { height: 12px; background: var(--track); border-radius: 999px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 999px; transition: width .4s; }
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 140px; }
+  .col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 12px; color: var(--muted); }
+  .col .b { width: 100%; border-radius: 8px 8px 4px 4px; background: linear-gradient(180deg, var(--acc), #3aa8e6); min-height: 4px; }
+  .entry { border-bottom: 1px solid var(--border); padding: 10px 0; }
+  .entry:last-child { border-bottom: none; }
+  .gridwrap { overflow: auto; max-height: 68vh; border: 1px solid var(--border); border-radius: 12px; }
+  table.tg { border-collapse: collapse; width: 100%; min-width: 760px; }
+  table.tg th, table.tg td { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); padding: 2px; text-align: center; }
+  table.tg th { position: sticky; top: 0; background: var(--card); z-index: 1; padding: 8px 4px; font-weight: 600; }
+  table.tg td.slot { font-size: 11px; color: var(--muted); white-space: nowrap; width: 62px; padding: 0 6px; }
+  table.tg select { width: 100%; font-size: 12px; padding: 4px; border-radius: 6px; border: 2px solid transparent; color: #fff; cursor: pointer; }
+  table.tg select option { color: #111; background: #fff; }
+  .k-free { background: var(--free) !important; color: var(--text) !important; }
+  .k-math { background: var(--math); } .k-phys { background: var(--phys); } .k-chem { background: var(--chem); }
+  .k-eng { background: var(--eng); } .k-vn { background: var(--vn); } .k-gym { background: var(--gym); }
+  .k-walk { background: var(--walk); } .k-rest { background: var(--rest); } .k-other { background: var(--other); }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: middle; background: var(--c); }
+  @media (max-width: 640px) {
+    .task { grid-template-columns: 26px 1fr; }
+    .task .tm { grid-column: 2; }
+    .task .actions { grid-column: 2; flex-direction: row; align-items: center; justify-content: space-between; }
+    .bar-row { grid-template-columns: 90px 1fr 110px; }
+    .week { height: 110px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Thời gian biểu của tôi</h1>
+  <p>Hoàn thành từng việc, theo dõi chuỗi ngày và ghi lại những gì bạn đã làm.</p>
+</header>
+
+<main>
+  <nav>
+    <button data-tab="today" class="on">Hôm nay</button>
+    <button data-tab="schedule">Thời gian biểu</button>
+    <button data-tab="progress">Tiến độ</button>
+    <button data-tab="journal">Nhật ký</button>
+  </nav>
+  <div id="app"></div>
+</main>
+
+<script>
+/* ---------- Cấu hình ---------- */
+const THIS_WEEK = "2026-11-16";           // tuần có lịch thay đổi riêng
+const DN = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+const NAMES = {
+  free: "— Trống —", math: "Toán", phys: "Lý", chem: "Hóa", eng: "Tiếng Anh V-ACT",
+  vn: "Tiếng Việt V-ACT", gym: "Gym", walk: "Đi bộ", rest: "Nghỉ / ăn", other: "Việc khác", ai: "Học AI",
+};
+const COLORS = {
+  math: "var(--math)", phys: "var(--phys)", chem: "var(--chem)", eng: "var(--eng)", vn: "var(--vn)",
+  gym: "var(--gym)", walk: "var(--walk)", rest: "var(--rest)", other: "var(--other)", ai: "var(--ai)",
+};
+const KEYS = ["free", "math", "phys", "chem", "eng", "vn", "gym", "walk", "rest", "other"];
+const SLOTS = 36; // 06:00 → 24:00, mỗi ô 30 phút
+const EARN_THRESHOLD = 80;
+const RESTORE_PER_WEEK = 3;
+
+// Lịch mặc định: [bắt đầu, kết thúc, loại]
+const BASE = [
+  [["11:30","12:00","rest"],["12:00","13:30","gym"],["13:30","14:30","walk"],["14:30","16:00","math"],["16:00","17:30","phys"],["21:00","22:00","vn"]],
+  [["12:00","17:00","other"],["17:00","18:00","walk"],["18:00","19:30","chem"],["19:30","21:00","eng"],["21:00","22:00","vn"]],
+  [["11:30","12:00","rest"],["12:00","13:30","gym"],["13:30","14:30","walk"],["14:30","16:00","math"],["16:00","17:30","chem"],["21:00","22:00","vn"]],
+  [["11:30","12:00","rest"],["13:30","15:00","phys"],["15:00","16:30","eng"],["17:00","18:00","walk"],["21:00","22:00","vn"]],
+  [["11:30","12:00","rest"],["12:00","13:30","gym"],["13:30","14:30","walk"],["14:30","16:00","math"],["16:00","17:30","phys"],["21:00","22:00","vn"]],
+  [["12:00","14:00","other"],["14:30","16:00","chem"],["16:00","17:30","eng"],["17:30","18:30","walk"],["21:00","22:00","vn"]],
+  [["11:30","12:00","rest"],["13:30","15:00","math"],["15:00","16:30","eng"],["17:00","18:00","walk"],["21:00","22:00","vn"]],
+];
+// Lịch riêng cho tuần THIS_WEEK
+const WEEK_ADD = {};
+const WEEK_REPLACE = {
+  0: [["15:30","17:00","math"], ["17:00","18:00","other"], ["18:00","19:00","other"], ["19:00","20:00","rest"], ["20:00","21:30","gym"], ["22:30","23:00","vn"]],
+  1: [["12:00","15:00","other"], ["15:00","21:00","other"], ["21:00","21:30","rest"], ["21:30","22:00","vn"]],
+  2: [["11:30","12:00","rest"], ["14:00","16:00","chem"], ["16:00","16:30","rest"], ["16:30","18:30","eng"], ["18:30","20:00","rest"], ["20:00","21:30","gym"], ["21:30","22:00","vn"]],
+  3: [["11:30","12:00","rest"], ["12:00","13:30","phys"], ["13:30","15:00","eng"], ["15:00","16:00","vn"], ["16:00","21:00","rest"]],
+  4: [["11:30","12:00","rest"], ["14:00","15:30","math"], ["15:30","16:00","rest"], ["16:00","17:30","phys"], ["18:00","19:00","walk"], ["21:00","21:30","vn"]],
+  5: [["11:30","12:00","rest"], ["12:00","13:30","gym"], ["15:00","16:30","chem"], ["16:30","17:00","rest"], ["17:00","18:30","eng"], ["21:00","21:30","vn"]],
+  6: [["11:30","12:00","rest"], ["14:00","16:00","math"], ["16:00","16:30","rest"], ["16:30","17:30","eng"], ["21:00","21:30","vn"]],
+};
+
+/* ---------- Ngày giờ ---------- */
+const pad = n => String(n).padStart(2, "0");
+const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseISO = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parseISO(s); d.setDate(d.getDate() + n); return toISO(d); };
+const dayIdx = s => (parseISO(s).getDay() + 6) % 7;
+const weekStart = s => addDays(s, -dayIdx(s));
+const toMin = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+const hm = min => `${pad(Math.floor(min / 60))}:${pad(min % 60)}`;
+const todayISO = toISO(new Date());
+const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
+const labelDate = s => { const d = parseISO(s); return `${DN[dayIdx(s)]}, ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`; };
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtHours = v => (Math.round(v * 100) / 100).toString().replace(/\.0$/, "");
+const fmtClock = sec => `${pad(Math.floor(sec / 3600))}:${pad(Math.floor(sec % 3600 / 60))}:${pad(sec % 60)}`;
+
+/* ---------- Dữ liệu ---------- */
+function loadDb() {
+  try { return JSON.parse(localStorage.getItem("tgbt_v5")) || { days: {}, sched: {}, timers: {} }; }
+  catch (e) { return { days: {}, sched: {}, timers: {} }; }
+}
+let db = loadDb();
+db.days = db.days || {}; db.sched = db.sched || {}; db.timers = db.timers || {};
+if (!db.start) db.start = todayISO;
+function save() { try { localStorage.setItem("tgbt_v5", JSON.stringify(db)); } catch (e) {} }
+function rec(s) { db.days[s] = db.days[s] || { tasks: {}, journal: "" }; return db.days[s]; }
+function taskRec(s, id) { const r = rec(s); r.tasks[id] = r.tasks[id] || { done: false, hours: null, note: "" }; return r.tasks[id]; }
+
+// Lưới 7 cột × 36 ô cho một tuần
+function defaultGrid(monday) {
+  const g = [];
+  for (let i = 0; i < 7; i++) {
+    const col = Array(SLOTS).fill("free");
+    let list = BASE[i];
+    if (monday === THIS_WEEK) {
+      if (WEEK_REPLACE[i]) list = WEEK_REPLACE[i];
+      else if (WEEK_ADD[i]) list = list.concat(WEEK_ADD[i]);
+    }
+    list.forEach(b => {
+      for (let j = (toMin(b[0]) - 360) / 30; j < (toMin(b[1]) - 360) / 30; j++) col[j] = b[2];
+    });
+    g.push(col);
+  }
+  return g;
+}
+const gridFor = monday => db.sched[monday] || defaultGrid(monday);
+function ensureGrid(monday) { db.sched[monday] = db.sched[monday] || defaultGrid(monday); return db.sched[monday]; }
+
+// Chuyển lưới của một ngày thành các khối việc (liền kề cùng loại thì gộp)
+function blocksFor(s) {
+  const col = gridFor(weekStart(s))[dayIdx(s)];
+  const out = [];
+  let j = 0;
+  while (j < SLOTS) {
+    const k = col[j];
+    if (k === "free") { j++; continue; }
+    let e = j;
+    while (e < SLOTS && col[e] === k) e++;
+    const st = 360 + j * 30, en = 360 + e * 30;
+    out.push({ id: `${st}-${k}`, start: hm(st), end: hm(en), key: k, title: NAMES[k], s: st, e: en, h: (e - j) / 2 });
+    j = e;
+  }
+  return out;
+}
+
+// Việc thêm trực tiếp vào danh sách hôm nay: không nằm trong lịch tuần
+function extraBlocks(s) {
+  const r = db.days[s];
+  return ((r && r.extras) || []).map(x => ({
+    id: x.id, key: x.key, title: x.name, start: "", end: "", s: null, e: null, h: x.h,
+  }));
+}
+function addExtra(s, name, key, h) {
+  const r = rec(s);
+  r.extras = r.extras || [];
+  r.extras.push({ id: "x" + Date.now().toString(36), name, key, h });
+  save();
+}
+
+// Học AI: không nằm trong lịch, chỉ được tính vào tiến trình của ngày
+function aiBlock(s) {
+  const d = db.days[s];
+  const h = d && d.aiPlan != null ? d.aiPlan : 1;
+  return { id: "ai", key: "ai", title: "Học AI", start: "", end: "", s: null, e: null, h };
+}
+// Các việc được tính vào tiến trình: loại trừ nghỉ/ăn và việc khác
+function trackables(s) {
+  const list = blocksFor(s).filter(b => b.key !== "rest" && b.key !== "other");
+  const extra = extraBlocks(s).filter(b => b.key !== "other" && b.h > 0);
+  const ai = aiBlock(s);
+  return ai.h > 0 ? [...list, ...extra, ai] : [...list, ...extra];
+}
+// Tất cả mục hiển thị trong tab Hôm nay
+function allListFor(s) { return [...blocksFor(s), ...extraBlocks(s), aiBlock(s)]; }
+
+// Thống kê một ngày (chỉ tính việc có trong tiến trình)
+function dayStats(s) {
+  const bl = trackables(s);
+  const day = db.days[s];
+  let planned = 0, actual = 0, done = 0;
+  bl.forEach(b => {
+    planned += b.h;
+    const t = day && day.tasks[b.id];
+    if (t && t.done) done++;
+    const h = t ? (t.hours != null ? t.hours : (t.done ? b.h : 0)) : 0;
+    actual += Math.min(h, b.h);
+  });
+  return { bl, planned, actual, done, total: bl.length, pct: planned ? Math.round(actual / planned * 100) : 0 };
+}
+
+function thresholdFor(s, start) {
+  const d = daysBetween(start, s);
+  return d >= 60 ? 70 : d >= 30 ? 60 : 50;
+}
+
+function computeStreak() {
+  const start = db.start;
+  let streakN = 0, earned80 = 0, balance = 0, wk = null, usedWeek = 0;
+  for (let s = start; s <= todayISO; s = addDays(s, 1)) {
+    const w = weekStart(s);
+    if (w !== wk) { wk = w; usedWeek = 0; }
+    const st = dayStats(s);
+    if (st.planned === 0) continue;
+    if (st.pct >= EARN_THRESHOLD) {
+      earned80++;
+      if (earned80 % 2 === 0) balance++;
+    }
+    if (st.pct >= thresholdFor(s, start)) {
+      streakN++;
+    } else if (s === todayISO) {
+      // hôm nay chưa xong, chưa tính là thất bại
+    } else if (balance > 0 && usedWeek < RESTORE_PER_WEEK) {
+      balance--; usedWeek++;
+    } else {
+      streakN = 0;
+    }
+  }
+  return { streak: streakN, balance, usedWeek, threshold: thresholdFor(todayISO, start) };
+}
+
+/* ---------- Đồng hồ đếm giờ ---------- */
+const timerKey = (s, id) => `${s}|${id}`;
+function startTimer(s, id) {
+  // Chỉ chạy một đồng hồ tại một thời điểm
+  Object.keys(db.timers).forEach(k => { if (k !== timerKey(s, id)) delete db.timers[k]; });
+  db.timers[timerKey(s, id)] = Date.now();
+  save();
+}
+function stopTimer(s, id) {
+  const key = timerKey(s, id);
+  const started = db.timers[key];
+  if (!started) return;
+  const hours = (Date.now() - started) / 3600000;
+  const tr = taskRec(s, id);
+  tr.hours = Math.round(((tr.hours || 0) + hours) * 100) / 100;
+  delete db.timers[key];
+  save();
+}
+
+/* ---------- Thêm / xóa việc ---------- */
+function removeBlock(s, b) {
+  if (String(b.id).startsWith("x")) { // việc thêm trong danh sách hôm nay
+    const r = db.days[s];
+    if (r) { r.extras = (r.extras || []).filter(x => x.id !== b.id); delete r.tasks[b.id]; }
+    delete db.timers[timerKey(s, b.id)];
+    save();
+    return;
+  }
+  const monday = weekStart(s);
+  const col = ensureGrid(monday)[dayIdx(s)];
+  for (let j = (b.s - 360) / 30; j < (b.e - 360) / 30; j++) col[j] = "free";
+  if (db.days[s]) delete db.days[s].tasks[b.id];
+  delete db.timers[timerKey(s, b.id)];
+  save();
+}
+
+function addBlock(s, key, startMin, endMin) {
+  const monday = weekStart(s);
+  const col = ensureGrid(monday)[dayIdx(s)];
+  for (let j = (startMin - 360) / 30; j < (endMin - 360) / 30; j++) {
+    if (j < 0 || j >= SLOTS) return "Thời gian nằm ngoài 06:00–24:00.";
+    if (col[j] !== "free") return `Trùng với "${NAMES[col[j]]}" lúc ${hm(360 + j * 30)}.`;
+  }
+  for (let j = (startMin - 360) / 30; j < (endMin - 360) / 30; j++) col[j] = key;
+  save();
+  return null;
+}
+
+/* ---------- Giao diện ---------- */
+let tab = "today";
+let current = todayISO;
+const app = document.getElementById("app");
+const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+
+function motivation(s, sk) {
+  const st = dayStats(s);
+  if (st.planned === 0) return { msg: "Hôm nay không có việc theo lịch. Nghỉ ngơi cũng là một phần của kế hoạch.", tip: "" };
+  let msg;
+  if (st.pct >= 90) msg = `Rất tốt! Bạn đã hoàn thành ${st.pct}% kế hoạch hôm nay.`;
+  else if (st.pct >= 60) msg = `Khá ổn, bạn đã hoàn thành ${st.pct}% kế hoạch hôm nay. Cố thêm chút nữa nhé.`;
+  else msg = `Bạn mới hoàn thành ${st.pct}% kế hoạch. Hãy ưu tiên những việc còn lại.`;
+  let tip = "";
+  const y = dayStats(addDays(s, -1));
+  if (y.planned > 0) {
+    const diff = st.pct - y.pct;
+    if (diff > 0) tip = `Năng suất hơn hôm qua ${diff}%.`;
+    else if (diff < 0) tip = `Thấp hơn hôm qua ${-diff}%. Thử hoàn thành phần việc còn lại nhé.`;
+    else tip = "Ngang bằng hôm qua, giữ nhịp này.";
+  }
+  if (sk.streak >= 3) tip += ` Chuỗi ${sk.streak} ngày liên tiếp!`;
+  return { msg, tip };
+}
+
+function renderToday() {
+  const st = dayStats(current);
+  const sk = computeStreak();
+  const m = motivation(current, sk);
+  const isToday = current === todayISO;
+  const nm = nowMinutes();
+  const dayRec = db.days[current];
+  const doneOf = id => dayRec && dayRec.tasks[id] && dayRec.tasks[id].done;
+  const overdue = isToday ? st.bl.filter(b => b.e != null && b.e <= nm && !doneOf(b.id)) : [];
+
+  let alerts = "";
+  if (overdue.length) alerts += `<div class="alert warn">Bạn còn ${overdue.length} việc đã đến giờ nhưng chưa đánh dấu: ${overdue.map(b => b.title).join(", ")}.</div>`;
+  if (isToday && st.pct < 60 && nm >= 18 * 60) alerts += `<div class="alert warn">Đến giờ này mới đạt ${st.pct}%. Nếu cần, hãy chuyển việc còn lại sang ngày mai và đừng bỏ cả ngày.</div>`;
+  if (st.planned && st.pct >= EARN_THRESHOLD) alerts += `<div class="alert good">Bạn đã làm rất tốt hôm nay!</div>`;
+
+  const listBl = allListFor(current);
+  const tasksHtml = listBl.length ? listBl.map(b => {
+    const t = (dayRec && dayRec.tasks[b.id]) || {};
+    const isRest = b.key === "rest" || b.key === "other"; // không có ô tick, đếm giờ
+    const running = !!db.timers[timerKey(current, b.id)];
+    return `
+      <div class="task ${t.done ? "done" : ""}" style="--c:${COLORS[b.key]}">
+        ${isRest ? `<span></span>` : `<input type="checkbox" data-id="${b.id}" data-field="done" ${t.done ? "checked" : ""}>`}
+        <div class="tm">${!b.start ? "Ngoài lịch" : b.key === "other" ? `${b.start} – ${b.end} · không tính tiến trình` : `${b.start} – ${b.end}`}</div>
+        <div>
+          <div class="tt">${escapeHtml(b.title)}</div>
+          ${isRest ? "" : `
+          <div class="sub">Kế hoạch ${fmtHours(b.h)} giờ</div>
+          <div class="fields">
+            <label>Đã làm <input type="number" min="0" step="0.25" value="${t.hours == null ? "" : fmtHours(t.hours)}" placeholder="${fmtHours(b.h)}" data-id="${b.id}" data-field="hours"> giờ</label>
+            <span class="timer ${running ? "live" : ""}" data-live="${b.id}" data-start="${running ? db.timers[timerKey(current, b.id)] : ""}">${running ? "" : ""}</span>
+          </div>
+          <input class="note" type="text" maxlength="200" placeholder="Ghi chú: đã làm tốt chưa? Cần lưu ý gì?" value="${escapeHtml(t.note || "")}" data-id="${b.id}" data-field="note">`}
+        </div>
+        <div class="actions">
+          ${isRest ? "" : `<button class="btn sm ${running ? "stop" : "run"}" data-timer="${running ? "stop" : "start"}" data-id="${b.id}">${running ? "⏹ Dừng" : "▶ Bắt đầu"}</button>`}
+          ${b.key === "ai" ? "" : `<button class="btn sm" data-del="${b.id}">Xóa</button>`}
+        </div>
+      </div>`;
+  }).join("") : `<p class="tips">Không có việc nào trong ngày này.</p>`;
+
+  const opts = KEYS.filter(k => k !== "free").map(k => `<option value="${k}">${NAMES[k]}</option>`).join("");
+  app.innerHTML = `
+    <div class="card">
+      <div class="row">
+        <button class="btn" data-nav="-1">◀</button>
+        <div class="grow date">${labelDate(current)}</div>
+        ${isToday ? "" : `<button class="btn" data-nav="today">Hôm nay</button>`}
+        <button class="btn" data-nav="1">▶</button>
+      </div>
+    </div>
+
+    <div class="card hero">
+      <div class="ring" style="background: conic-gradient(var(--acc) ${st.pct * 3.6}deg, var(--track) 0)"><span>${st.pct}%</span></div>
+      <div class="grow">
+        <p class="msg">${m.msg}</p>
+        <p class="tips">${m.tip}</p>
+        <p class="tips">Đã làm ${st.done}/${st.total} việc · ${fmtHours(st.actual)}/${fmtHours(st.planned)} giờ</p>
+        <div style="margin-top:8px" class="row">
+          <span class="streak">🔥 ${sk.streak} ngày</span>
+          <span class="pill">Khôi phục: ${sk.balance} · tuần này dùng ${sk.usedWeek}/${RESTORE_PER_WEEK}</span>
+        </div>
+      </div>
+    </div>
+
+    ${alerts}
+
+    <div class="card">
+      <h2>Danh sách việc hôm nay</h2>
+      ${tasksHtml}
+      <p class="tips">Bấm ▶ để đếm giờ cho một việc; khi dừng, thời gian sẽ được cộng vào "Đã làm". Bạn cũng có thể nhập tay số giờ.</p>
+    </div>
+
+    <div class="card">
+      <h2>Thêm công việc vào hôm nay</h2>
+      <div class="addform">
+        <input type="text" id="exName" maxlength="80" placeholder="Tên việc, ví dụ: Ôn đề thi thử" style="flex:1;min-width:200px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        <select id="exKey">${opts}</select>
+        <label class="tips">Dự kiến <input type="number" id="exH" min="0" step="0.5" value="1" style="width:70px"> giờ</label>
+        <button class="btn acc" id="exBtn">Thêm</button>
+      </div>
+      <p class="tips" id="exMsg">Việc này xuất hiện trong danh sách hôm nay và được tính tiến độ. Không được thêm vào lịch tuần.</p>
+    </div>
+
+    <div class="card">
+      <h2>Thêm vào lịch tuần</h2>
+      <div class="addform">
+        <select id="addKey">${opts}</select>
+        <input type="time" id="addStart" value="18:00">
+        <span class="tips">đến</span>
+        <input type="time" id="addEnd" value="19:00">
+        <button class="btn acc" id="addBtn">Thêm vào ${labelDate(current).split(",")[0]}</button>
+      </div>
+      <div class="addform" style="margin-top:10px">
+        <label class="tips">Mục tiêu học AI hôm nay:
+          <input type="number" id="aiPlan" min="0" step="0.5" value="${dayRec && dayRec.aiPlan != null ? dayRec.aiPlan : 1}" style="width:80px"> giờ
+        </label>
+      </div>
+      <p class="tips" id="addMsg"></p>
+    </div>`;
+}
+
+function renderSchedule() {
+  const monday = weekStart(todayISO);
+  const g = gridFor(monday);
+  const isCustom = !!db.sched[monday];
+
+  const head = `<tr><th>Giờ</th>${DN.map(d => `<th>${d}</th>`).join("")}</tr>`;
+  const rows = [...Array(SLOTS)].map((_, j) => {
+    const cells = DN.map((_, d) => {
+      const k = g[d][j];
+      const cls = k === "free" ? "k-free" : "k-" + k;
+      return `<td><select class="${cls}" data-cell="${d},${j}">${KEYS.map(opt =>
+        `<option value="${opt}" ${opt === k ? "selected" : ""}>${NAMES[opt]}</option>`).join("")}</select></td>`;
+    }).join("");
+    return `<tr><td class="slot">${hm(360 + j * 30)}</td>${cells}</tr>`;
+  }).join("");
+
+  const totals = {};
+  for (let d = 0; d < 7; d++) g[d].forEach(k => { if (k !== "free") totals[k] = (totals[k] || 0) + 0.5; });
+  const totalsText = Object.keys(totals).map(k => `${NAMES[k]}: ${totals[k]} giờ`).join(" · ");
+
+  app.innerHTML = `
+    <div class="card">
+      <div class="row">
+        <h2 class="grow" style="margin:0">Thời gian biểu tuần</h2>
+        ${isCustom ? `<button class="btn" id="resetSched">Về lịch mặc định</button>` : `<span class="pill">Đang dùng lịch mặc định</span>`}
+      </div>
+      <p class="tips" style="margin:8px 0 12px">Chọn lại loại hoạt động trong từng ô để thay đổi lịch. Thay đổi được lưu cho tuần này.</p>
+      <div class="legend">
+        ${KEYS.filter(k => k !== "free").map(k => `<span style="--c:${COLORS[k]}">${NAMES[k]}</span>`).join("")}
+      </div>
+      <div class="gridwrap">
+        <table class="tg"><thead>${head}</thead><tbody>${rows}</tbody></table>
+      </div>
+      <p class="tips" style="margin-top:10px">Tổng tuần: ${totalsText || "chưa có việc nào"}</p>
+    </div>`;
+}
+
+function renderProgress() {
+  const sk = computeStreak();
+  const monday = weekStart(todayISO);
+
+  const subj = {};
+  for (let i = 0; i < 7; i++) {
+    const s = addDays(monday, i);
+    trackables(s).forEach(b => {
+      subj[b.key] = subj[b.key] || { planned: 0, actual: 0 };
+      subj[b.key].planned += b.h;
+      const t = db.days[s] && db.days[s].tasks[b.id];
+      const h = t ? (t.hours != null ? t.hours : (t.done ? b.h : 0)) : 0;
+      subj[b.key].actual += Math.min(h, b.h);
+    });
+  }
+  const keys = Object.keys(subj);
+  const subjHtml = keys.map(k => {
+    const r = subj[k];
+    const pct = r.planned ? Math.round(r.actual / r.planned * 100) : 0;
+    return `<div class="bar-row">
+      <span>${NAMES[k]}</span>
+      <div class="track"><div class="fill" style="width:${pct}%;background:${COLORS[k]}"></div></div>
+      <span class="tips">${fmtHours(r.actual)}/${fmtHours(r.planned)} giờ (${pct}%)</span>
+    </div>`;
+  }).join("");
+
+  const weekPct = ws => {
+    let p = 0, a = 0;
+    for (let i = 0; i < 7; i++) { const st = dayStats(addDays(ws, i)); p += st.planned; a += st.actual; }
+    return p ? Math.round(a / p * 100) : 0;
+  };
+  const wNow = weekPct(monday), wPrev = weekPct(addDays(monday, -7));
+  const wDiff = wNow - wPrev;
+
+  const last7 = [...Array(7)].map((_, k) => {
+    const s = addDays(todayISO, k - 6);
+    const st = dayStats(s);
+    return `<div class="col"><div class="b" style="height:${Math.max(st.pct, 3)}%"></div><span>${DN[dayIdx(s)]}</span><span>${st.pct}%</span></div>`;
+  }).join("");
+
+  const worst = keys.filter(k => subj[k].planned > 0)
+    .sort((a, b) => (subj[a].actual / subj[a].planned) - (subj[b].actual / subj[b].planned))[0];
+  const insight = worst
+    ? `Môn cần chú ý nhất tuần này: <b>${NAMES[worst]}</b> (${Math.round(subj[worst].actual / subj[worst].planned * 100)}%).`
+    : "Chưa có dữ liệu để phân tích.";
+
+  app.innerHTML = `
+    <div class="card hero">
+      <div><span class="streak">🔥 ${sk.streak} ngày</span></div>
+      <div class="grow">
+        <p class="msg">${sk.streak >= 7 ? "Một tuần liền mạch. Thật ấn tượng!" : sk.streak >= 3 ? "Đang đi đúng hướng, giữ nhịp này nhé." : "Bắt đầu chuỗi hôm nay nào!"}</p>
+        <p class="tips">Mục tiêu giữ chuỗi hiện tại: <b>${sk.threshold}%</b> mỗi ngày.</p>
+        <p class="tips">Khôi phục: còn <b>${sk.balance}</b> lượt · tuần này đã dùng ${sk.usedWeek}/${RESTORE_PER_WEEK}.</p>
+        <p class="tips">Cứ 2 ngày đạt từ ${EARN_THRESHOLD}% trở lên, bạn được thêm 1 lượt khôi phục. Mỗi tuần dùng tối đa ${RESTORE_PER_WEEK} lượt.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>So sánh tuần</h2>
+      <p class="msg">Tuần này đạt <b>${wNow}%</b> kế hoạch${wPrev ? `, ${wDiff >= 0 ? "tăng" : "giảm"} ${Math.abs(wDiff)}% so với tuần trước (${wPrev}%).` : "."}</p>
+      <p class="tips">${insight}</p>
+    </div>
+
+    <div class="card">
+      <h2>Tiến độ theo môn trong tuần</h2>
+      <div class="bars">${subjHtml || '<p class="tips">Chưa có dữ liệu.</p>'}</div>
+    </div>
+
+    <div class="card">
+      <h2>7 ngày gần nhất</h2>
+      <div class="week">${last7}</div>
+    </div>`;
+}
+
+function renderJournal() {
+  const day = rec(current);
+  const entries = [...Array(30)].map((_, k) => addDays(todayISO, -k)).filter(s => {
+    const d = db.days[s];
+    return d && (d.journal || Object.values(d.tasks).some(t => t.note));
+  });
+  const notesHtml = entries.length ? entries.map(s => {
+    const d = db.days[s];
+    const taskNotes = Object.entries(d.tasks).filter(([, t]) => t.note).map(([id, t]) => {
+      const b = blocksFor(s).find(x => x.id === id);
+      return `<div class="sub">• ${b ? b.title : "Việc đã xóa"}: ${escapeHtml(t.note)}</div>`;
+    }).join("");
+    return `<div class="entry"><div class="row"><b>${labelDate(s)}</b><span class="pill">${dayStats(s).pct}%</span></div>
+      ${d.journal ? `<p style="margin:6px 0">${escapeHtml(d.journal).replace(/\n/g, "<br>")}</p>` : ""}${taskNotes}</div>`;
+  }).join("") : `<p class="tips">Chưa có ghi chú nào trong 30 ngày gần đây.</p>`;
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>Nhật ký ${labelDate(current)}</h2>
+      <textarea id="journal" placeholder="Hôm nay bạn học được gì? Có điều gì cần nhớ cho ngày mai?">${escapeHtml(day.journal || "")}</textarea>
+      <p class="tips">Tự lưu khi bạn rời ô nhập.</p>
+    </div>
+    <div class="card">
+      <h2>Ghi chú 30 ngày gần đây</h2>
+      ${notesHtml}
+    </div>`;
+}
+
+function render() {
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  if (tab === "today") renderToday();
+  else if (tab === "schedule") renderSchedule();
+  else if (tab === "progress") renderProgress();
+  else renderJournal();
+}
+
+// Cập nhật số đồng hồ mỗi giây mà không vẽ lại cả trang
+setInterval(() => {
+  document.querySelectorAll("[data-live]").forEach(el => {
+    const started = Number(el.dataset.start);
+    if (started) el.textContent = "⏱ " + fmtClock(Math.floor((Date.now() - started) / 1000));
+  });
+}, 1000);
+
+/* ---------- Sự kiện ---------- */
+document.querySelector("nav").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  tab = b.dataset.tab; render();
+});
+
+app.addEventListener("click", e => {
+  const nav = e.target.closest("[data-nav]");
+  if (nav) {
+    const v = nav.dataset.nav;
+    current = v === "today" ? todayISO : addDays(current, +v);
+    render(); return;
+  }
+  const timer = e.target.closest("[data-timer]");
+  if (timer) {
+    const id = timer.dataset.id;
+    if (timer.dataset.timer === "start") startTimer(current, id);
+    else stopTimer(current, id);
+    save(); render(); return;
+  }
+  const del = e.target.closest("[data-del]");
+  if (del) {
+    const b = allListFor(current).find(x => x.id === del.dataset.del);
+    if (b && confirm(`Xóa "${b.title}" (${b.start}–${b.end}) khỏi ${labelDate(current)}?`)) {
+      removeBlock(current, b); render();
+    }
+    return;
+  }
+  if (e.target.id === "exBtn") {
+    const name = document.getElementById("exName").value.trim();
+    const key = document.getElementById("exKey").value;
+    const h = Math.max(0, parseFloat(document.getElementById("exH").value) || 0);
+    if (!name) { document.getElementById("exMsg").textContent = "Nhập tên việc trước khi thêm."; return; }
+    addExtra(current, name, key, h);
+    render();
+    return;
+  }
+  if (e.target.id === "addBtn") {
+    const key = document.getElementById("addKey").value;
+    const st = toMin(document.getElementById("addStart").value || "00:00");
+    const en = toMin(document.getElementById("addEnd").value || "00:00");
+    const msgEl = document.getElementById("addMsg");
+    if (en <= st) { msgEl.textContent = "Giờ kết thúc phải sau giờ bắt đầu."; return; }
+    const err = addBlock(current, key, st, en);
+    if (err) { msgEl.textContent = err; return; }
+    render();
+    return;
+  }
+  if (e.target.id === "resetSched") {
+    delete db.sched[weekStart(todayISO)];
+    save(); render();
+  }
+});
+
+app.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.cell !== undefined) {
+    const [d, j] = t.dataset.cell.split(",").map(Number);
+    const monday = weekStart(todayISO);
+    ensureGrid(monday)[d][j] = t.value;
+    save(); render(); return;
+  }
+  if (t.id === "aiPlan") { rec(current).aiPlan = Math.max(0, parseFloat(t.value) || 0); save(); render(); return; }
+  if (t.id === "journal") { rec(current).journal = t.value; save(); return; }
+  if (t.dataset.id === undefined) return;
+  const id = t.dataset.id;
+  const tr = taskRec(current, id);
+  const block = allListFor(current).find(x => x.id === id);
+  if (t.dataset.field === "done") {
+    tr.done = t.checked;
+    if (t.checked && tr.hours == null && block) tr.hours = block.h;
+  } else if (t.dataset.field === "hours") {
+    tr.hours = t.value === "" ? null : Math.max(0, parseFloat(t.value) || 0);
+  } else if (t.dataset.field === "note") {
+    tr.note = t.value.trim();
+  }
+  save(); render();
+});
+
+// Nhắc nhở và cập nhật trạng thái mỗi phút khi đang xem tab Hôm nay
+setInterval(() => { if (tab === "today" && current === todayISO) renderToday(); }, 60000);
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+THỜI GIAN BIỂU - HƯỚNG DẪN CÀI ĐẶT (Windows 10/11)
+
+1. Giữ nguyên thư mục ThoiGianBieu (có file index.html và cai_dat.ps1).
+   Không đổi tên file index.html.
+
+2. Cài shortcut ra Desktop:
+   - Chuột phải vào cai_dat.ps1 -> Run with PowerShell.
+   - Nếu Windows chặn script, mở PowerShell trong thư mục này và chạy:
+       powershell -ExecutionPolicy Bypass -File .\cai_dat.ps1
+   - Sau khi chạy xong, trên Desktop có shortcut "ThoiGianBieu".
+
+3. Mở app: nhấp đúp shortcut ThoiGianBieu. App mở trong cửa sổ riêng bằng Edge (hoặc Chrome).
+
+4. Tự mở khi bật máy (tùy chọn):
+   - Nhấn Win + R, gõ shell:startup, Enter.
+   - Copy shortcut ThoiGianBieu từ Desktop vào thư mục vừa mở.
+
+LƯU Ý QUAN TRỌNG
+- Dữ liệu (lịch, giờ đã làm, ghi chú, streak) được lưu trong trình duyệt trên máy này.
+  Nếu gỡ trình duyệt, xóa dữ liệu duyệt web hoặc đổi máy, dữ liệu sẽ mất.
+- Nên mở app bằng shortcut thay vì mở file trực tiếp trong trình duyệt,
+  để dữ liệu luôn nằm cùng một chỗ.
+- Google Calendar chưa được đồng bộ trong bản này.
